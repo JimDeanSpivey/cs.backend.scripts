@@ -27,32 +27,40 @@ dem               : digital elevation model, srtm3 or gtopo30, average elevation
 modification date : date of last modification in yyyy-MM-dd format
 '''
 class CityData
-  attr_accessor :name, :alternate_names,  
-    :latitude, :longitude, :country_code, 
-    :population, :timezone
+  attr_accessor \
+    :name,
+    #:alternate_names,  
+    :search_name,
+    :search_aliases,
+    :latitude,
+    :longitude,
+    :country_code, 
+    :state_code,
+    :population,
+    :timezone
 end
 
-
+def sanitizeName(name)
+  #name.delete '.,'
+  name.gsub(/[^a-z0-9\s]/i, '')
+end
 
 f.each_line { |l| 
   c = l.split /\t/
-  #cityName = c[1]
-  #alternativeNames = c[3].split ','
-  #lat = c[4]
-  #long = c[5]
-  #country = c[8]
-  #pop = c[14]
-  #timezone = c[17]
 
   data = CityData.new
   data.name = c[1]
-  data.alternate_names = c[3].split ','
+  #data.alternate_names = c[3].split ','
+  data.search_name = *sanitizeName(c[1])
+  data.search_aliases = []
   data.latitude = c[4]
   data.longitude = c[5]
   data.country_code = c[8]
+  data.state_code = c[10]
   data.population = c[14]
   data.timezone = c[17]
 
   puts data.to_json
 }
+
 
