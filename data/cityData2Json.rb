@@ -1,7 +1,5 @@
 require 'active_support/all'
 
-f = File.open('cities5000.txt', 'r')
-
 '''
 Fields table:
 The main "geoname" table has the following fields :
@@ -35,32 +33,84 @@ class CityData
     :latitude,
     :longitude,
     :country_code, 
+    :country_name,
     :state_code,
+    :state_name,
     :population,
-    :timezone
+    :timezone,
+    :require_state, #Most cities have a unique name, however small cities can have common names
+    :require_country
+end
+
+def getCountryNames()
+  result = {}
+  f = File.open('countryInfo.txt', 'r')
+  f.each_line { |l|
+    next if l.starts_with? '#' 
+    c = l.split /\t/
+    result[c[0]] = c[4]
+  }  
+  result
+end
+
+def getStateNames()
+  result = {}
+  f = File.open('admin1CodesASCII.txt', 'r')
+  f.each_line { |l|
+    c = l.split /\t/
+    result[c[0]] = c[1]
+  }
+  result
 end
 
 def sanitizeName(name)
-  #name.delete '.,'
   name.gsub(/[^a-z0-9\s]/i, '')
 end
 
+countryNames = getCountryNames()
+stateNames = getStateNames()
+f = File.open('cities5000.txt', 'r')
 f.each_line { |l| 
   c = l.split /\t/
 
   data = CityData.new
   data.name = c[1]
-  #data.alternate_names = c[3].split ','
-  data.search_name = *sanitizeName(c[1])
+  data.search_name = sanitizeName(c[1])
   data.search_aliases = []
-  data.latitude = c[4]
-  data.longitude = c[5]
+  data.latitude = c[4].to_f
+  data.longitude = c[5].to_f
   data.country_code = c[8]
-  data.state_code = c[10]
-  data.population = c[14]
+  data.country_name = countryNames[data.country_code]
+  data.state_code = c[10] if data.country_code.eql? 'US'
+  data.state_name = stateNames[data.country_code + '.' +c[10]]
+  data.population = c[14].to_i
   data.timezone = c[17]
 
+  case data.country_code
+  when 'US'
+    if data.population < 250000
+      data.require_state = 'true'
+    else
+      data.require_state = 'false'
+    end
+    data.require_country = 'false'
+  else
+    data.require_state = 'false' #People rarely refer to provinces/states outside of the US, in the news
+    if data.population < 1000000 or ['CN', 'IN'].include?(data.country_code)
+      data.require_country = 'true'
+    else
+      data.require_country = 'false'
+    end
+  end
+
+  #p stateNames
+  #p c
   puts data.to_json
+
+  #p c[8]
+  #p c[10]
+
+  #exit
 }
 
 
