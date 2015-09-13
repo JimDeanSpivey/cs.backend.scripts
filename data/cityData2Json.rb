@@ -69,9 +69,25 @@ end
 
 countryNames = getCountryNames()
 stateNames = getStateNames()
+duplicateCities = [
+  'Borough of Queens',
+  'Brooklyn',
+  'Manhattan',
+  'New South Memphis',
+  'Santa Ana',
+  'South Boston',
+  'Staten Island',
+  'The Bronx',
+  'West Raleigh',
+  #TODO: there are certainly more cities to filter, these are the largest though
+]
+
+
 f = File.open('cities5000.txt', 'r')
 f.each_line { |l| 
   c = l.split /\t/
+  
+  next if duplicateCities.include? c[1]
 
   data = CityData.new
   data.name = c[1]
