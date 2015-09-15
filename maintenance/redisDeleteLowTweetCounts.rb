@@ -10,6 +10,7 @@ OptionParser.new do |opt|
          'How old the twitter word count, measured in hours.') { |o| options[:hours] = o }
   opt.on('-w', '--wordCount COUNT', OptionParser::DecimalInteger,
          'Word counts lower than this will be deleted.') { |o| options[:wordCount] = o }
+  opt.on('-v', '--verbose') { |o| options[:verbose] = true }
 end.parse!
 raise OptionParser::MissingArgument if options[:hours].nil?
 raise OptionParser::MissingArgument if options[:wordCount].nil?
@@ -31,7 +32,7 @@ redis.keys('*').each { |k|
 
   # Delete hashes with low word counts
   redis.zrangebyscore(k, 0, options[:wordCount]).each { |kz| 
-    p "deleting #{k} : #{kz}" #TODO: add as CLI parm to control verbosity
+    p "deleting #{k} : #{kz}" if options[:verbose]
     redis.zrem(k, kz)
   }
 }
