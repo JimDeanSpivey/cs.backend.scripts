@@ -91,7 +91,7 @@ f.each_line { |l|
 
   data = CityData.new
   data.name = c[1]
-  data.search_name = sanitizeName(c[1])
+  data.search_name = sanitizeName c[1]
   data.search_aliases = []
   data.latitude = c[4].to_f
   data.longitude = c[5].to_f
