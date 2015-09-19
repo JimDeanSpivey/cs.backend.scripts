@@ -1,38 +1,15 @@
-require 'date'
-require 'active_support/all'
 require 'redis'
-require 'optparse'
+require_relative '../redis-common.rb'
 
-# Parse args
-options = {}
-OptionParser.new do |opt|
-  opt.on('-a', '--age HOURS', OptionParser::DecimalInteger,
-         'How old the twitter word count, measured in hours.') { |o| options[:hours] = o }
-  opt.on('-w', '--wordCount COUNT', OptionParser::DecimalInteger,
-         'Word counts lower than this will be deleted.') { |o| options[:wordCount] = o }
-  opt.on('-v', '--verbose') { |o| options[:verbose] = true }
-end.parse!
-raise OptionParser::MissingArgument if options[:hours].nil?
-raise OptionParser::MissingArgument if options[:wordCount].nil?
-
-def extractDate(key)
-  DateTime.strptime(key.split(':')[1..2].join, '%Y%m%d%H%M')
-end
-
-def dateRecent(keyDate, arg)
-  DateTime.now < keyDate.advance(:hours => arg)
-end
-
+rco = RedisCommon.new
+options = rco.parseCliOptions
 
 # Iterate all keys
 redis = Redis.new
 redis.keys('*').each { |k|
-  date = extractDate k
-  next if dateRecent date, options[:hours]
+  date = rco.extractDate k
+  next if rco.dateRecent date, options[:hours]
 
-  # Delete hashes with low word counts
-  redis.zrangebyscore(k, 0, options[:wordCount]).each { |kz| 
-    p "deleting #{k} : #{kz}" if options[:verbose]
-    redis.zrem(k, kz)
-  }
+  # Delete all hash elements with low word counts
+  redis.zremrangebyscore(k, 0, options[:wordCount])
 }
