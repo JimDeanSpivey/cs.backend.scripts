@@ -15,6 +15,7 @@ class RedisCommon
       opt.on('-w', '--wordCount COUNT', OptionParser::DecimalInteger,
              'Word counts lower than this will be deleted.') { |o| @options[:wordCount] = o }
       opt.on('-v', '--verbose') { |o| options[:verbose] = true }
+      opt.on('-h', '--help') { |o| options[:help] = true }
     end.parse!
     raise OptionParser::MissingArgument if @options[:hours].nil?
     raise OptionParser::MissingArgument if @options[:wordCount].nil?
