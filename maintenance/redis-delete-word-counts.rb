@@ -18,5 +18,9 @@ redis.keys('*').each { |k|
   next if rco.dateRecent date, options[:hours]
 
   # Delete all hash elements with low word counts
-  redis.zremrangebyscore(k, 0, options[:wordCount])
+  begin
+    redis.zremrangebyscore(k, 0, options[:wordCount])
+  rescue Redis::TimeoutError => e
+    puts 'Warning: #{e}'
+  end
 }
