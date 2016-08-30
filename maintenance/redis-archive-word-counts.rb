@@ -13,11 +13,16 @@ if options[:help]
   exit
 end
 
+log = Logger.new(STDOUT)
+log.level = Logger::ERROR
+if options[:verbose]
+  log.level = Logger::INFO
+end
 
 hashesByTime = Hash.new
 # Iterate all keys
 redis = Redis.new
-redis.keys('*').each { |k|
+redis.keys('*').each { |k| # I should probably not query by '*' but it's not possible to do searchs with * unless it is the last character.
   date = rco.extractDate k
   # Skip if the date too recent (not old enough to archive)
   next if rco.dateRecent date, options[:hours]
@@ -46,36 +51,22 @@ redis.keys('*').each { |k|
   #in order to singal success
 }
 
-
-if options[:verbose]
-  puts 'Found ' +hashesByTime.size.to_s+ ' date/time buckets of word-counts to persist.'
-end
-
+log.info "Found #{+hashesByTime.size.to_s} date/time buckets of word-counts to persist."
 
 output = hashesByTime.to_json
 saveCount = 0
 hashesByTime.each do |k,v|
-
-  if options[:verbose]
-    p k
-    p v.to_json
-  end
-  
+  log.info "Key: [#{k}] -. JSON: #{v.to_json}"
   uri = URI.encode("wordcounts/" + k)
-
   begin
     RestClient.put 'http://localhost:5984/' + uri, v.to_json, {:content_type => :json}
     saveCount += 1
-    puts 'Success. Sent document ' +k.to_s+ 'containing ' +v.size.to_s+ ' records, to couchdb.' if options[:verbose]
+    log.info "Success. Sent document #{k} containing #{v.size} records to couchdb."
   rescue RestClient::Conflict
     # Simply rescue and continue to the next record if there is a conflict. But print a notification.
     # todo: consider adding logic to delete and re-submit the latest data to couchdb
-    puts 'Error. 409 - Document conflict found for ' +k.to_s
+    log.error "409 - Document conflict found for #{k}"
   end
-
 end
 
-if options[:verbose]
-  puts 'Saved ' +saveCount.to_s+ ' date/time word-count buckets out of ' +hashesByTime.size.to_s+ ' total found.'
-  puts 'Archive script ran to completion.'
-end
+log.info "Saved #{saveCount} date/time word-count buckets out of #{hashesByTime.size} total found." 
