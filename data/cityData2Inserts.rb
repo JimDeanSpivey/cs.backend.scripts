@@ -61,16 +61,23 @@ def getStateNames()
 end
 
 def sanitizeName(name)
-  name.gsub(/[^a-z0-9\s]/i, '')
+  #name.gsub(/[^a-z0-9\s]/i, '')
+  name.gsub("'", "''")
 end
 
-def toInsert(data)
+def toCityInsert(data)
   "INSERT INTO city (name, latitude, longitude, country_code,
-  state_code, require_country, require_state, population) values (
-  '#{data.name}', #{data.latitude}, #{data.longitude},
+  state_code, require_country, require_state, population) VALUES (
+  '#{sanitizeName(data.name)}', #{data.latitude}, #{data.longitude},
   '#{data.country_code}', '#{data.state_code}', '#{data.require_country}',
   '#{data.require_state}', #{data.population});"
 end
+
+def toKeywordInsert(data)
+  "INSERT INTO keyword (name, type) VALUES (
+  '#{sanitizeName(data.name)}', 'City');"
+end
+
 
 countryNames = getCountryNames()
 stateNames = getStateNames()
@@ -96,8 +103,6 @@ f.each_line { |l|
 
   data = CityData.new
   data.name = c[1]
-  data.search_name = sanitizeName c[1]
-  data.search_aliases = []
   data.latitude = c[4].to_f
   data.longitude = c[5].to_f
   data.country_code = c[8]
@@ -117,14 +122,15 @@ f.each_line { |l|
     data.require_country = 'false'
   else
     data.require_state = 'false' #People rarely refer to provinces/states outside of the US, in the news
-    if data.population < 1000000 or ['CN', 'IN'].include?(data.country_code)
+    if data.population < 500000 # or ['CN', 'IN'].include?(data.country_code)
       data.require_country = 'true'
     else
       data.require_country = 'false'
     end
   end
 
-  puts toInsert(data)
+  puts toCityInsert(data)
+  puts toKeywordInsert(data) if data.population > 100000
 
   #p stateNames
   #p c
