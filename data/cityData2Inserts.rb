@@ -27,9 +27,6 @@ modification date : date of last modification in yyyy-MM-dd format
 class CityData
   attr_accessor \
     :name,
-    #:alternate_names,  
-    :search_name,
-    :search_aliases,
     :latitude,
     :longitude,
     :country_code, 
@@ -68,9 +65,9 @@ def sanitizeName(name)
 end
 
 def toInsert(data)
-  "INSERT INTO cities (name, search_name, latitude, longitude, country_code,
+  "INSERT INTO city (name, latitude, longitude, country_code,
   state_code, require_country, require_state, population) values (
-  '#{data.name}', '#{data.search_name}', #{data.latitude}, #{data.longitude},
+  '#{data.name}', #{data.latitude}, #{data.longitude},
   '#{data.country_code}', '#{data.state_code}', '#{data.require_country}',
   '#{data.require_state}', #{data.population});"
 end
