@@ -60,22 +60,27 @@ def getStateNames()
   result
 end
 
-def sanitizeName(name)
-  #name.gsub(/[^a-z0-9\s]/i, '')
+def escapeSingleQuote(name)
   name.gsub("'", "''")
 end
 
+def escapeSpecialChars(name)
+  #name.gsub(/[^a-z0-9\s]/i, '')
+  name.unicode_normalize(:nfkd).encode('ASCII', replace: '')
+end
+
 def toCityInsert(data)
-  "INSERT INTO city (name, latitude, longitude, country_code,
+  "INSERT INTO city (name, name_special_chars, latitude, longitude, country_code,
   state_code, require_country, require_state, population) VALUES (
-  '#{sanitizeName(data.name)}', #{data.latitude}, #{data.longitude},
+  '#{escapeSingleQuote(data.name)}', '#{escapeSingleQuote(escapeSpecialChars(data.name))}', 
+  #{data.latitude}, #{data.longitude},
   '#{data.country_code}', '#{data.state_code}', '#{data.require_country}',
   '#{data.require_state}', #{data.population});"
 end
 
 def toKeywordInsert(data)
   "INSERT INTO keyword (name, type) VALUES (
-  '#{sanitizeName(data.name)}', 'City');"
+  '#{escapeSingleQuote(data.name)}', 'City');"
 end
 
 
