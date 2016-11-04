@@ -5,7 +5,7 @@ rco = RedisCommon.new
 options = rco.parseCliOptions
 
 # Iterate all keys
-redis = Redis.new
+redis = Redis.new(:password => options[:password])
 redis.keys('wordcounts:*').each { |k|
   date = rco.extractDate k
   # Skip if the date too old (not recent)
