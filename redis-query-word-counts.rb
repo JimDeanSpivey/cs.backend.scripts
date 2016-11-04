@@ -6,7 +6,7 @@ options = rco.parseCliOptions
 
 # Iterate all keys
 redis = Redis.new
-redis.keys('*').each { |k|
+redis.keys('wordcounts:*').each { |k|
   date = rco.extractDate k
   # Skip if the date too old (not recent)
   next if !rco.dateRecent date, options[:hours]

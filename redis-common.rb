@@ -14,6 +14,8 @@ class RedisCommon
              'How old the twitter word count, measured in hours.') { |o| @options[:hours] = o }
       opt.on('-w', '--wordCount COUNT', OptionParser::DecimalInteger,
              'Word counts lower than this will be deleted.') { |o| @options[:wordCount] = o }
+      opt.on('-p', '--password PASSWORD', OptionParser::String,
+             'Word counts lower than this will be deleted.') { |o| @options[:password] = o }
       opt.on('-v', '--verbose') { |o| options[:verbose] = true }
       opt.on('-h', '--help') { |o| options[:help] = true }
     end.parse!
@@ -24,7 +26,7 @@ class RedisCommon
   end
 
   def extractDate(key)
-    DateTime.strptime(key.split(':')[1..2].join, '%Y%m%d%H%M')
+    DateTime.strptime(key.split(':')[2..3].join, '%Y%m%d%H%M')
   end
 
   def dateRecent(keyDate, arg)
