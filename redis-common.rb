@@ -7,7 +7,6 @@ class RedisCommon
   attr_accessor :options
 
   def parseCliOptions()
-
     @options = {}
     OptionParser.new do |opt|
       opt.on('-a', '--age HOURS', OptionParser::DecimalInteger,

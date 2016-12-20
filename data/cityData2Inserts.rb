@@ -27,6 +27,7 @@ modification date : date of last modification in yyyy-MM-dd format
 class CityData
   attr_accessor \
     :name,
+    :special_chars_name,
     :latitude,
     :longitude,
     :country_code, 
@@ -72,17 +73,24 @@ end
 def toCityInsert(data)
   "INSERT INTO city (name, name_special_chars, latitude, longitude, country_code,
   state_code, require_country, require_state, population) VALUES (
-  '#{escapeSingleQuote(data.name)}', '#{escapeSingleQuote(escapeSpecialChars(data.name))}', 
+  '#{escapeSingleQuote(escapeSpecialChars(data.name))}', '#{escapeSingleQuote(data.special_chars_name)}', 
   #{data.latitude}, #{data.longitude},
-  '#{data.country_code}', '#{data.state_code}', '#{data.require_country}',
+  '#{data.country_code}', #{formatSqlNull(data.state_code)}, '#{data.require_country}',
   '#{data.require_state}', #{data.population});"
 end
 
-def toKeywordInsert(data)
-  "INSERT INTO keyword (name, type) VALUES (
-  '#{escapeSingleQuote(data.name)}', 'City');"
-end
+#def toKeywordInsert(data)
+#  "INSERT INTO keyword (name, type) VALUES (
+#  '#{escapeSingleQuote(data.name)}', 'City');"
+#end
 
+def formatSqlNull(str)
+  if str.nil?
+    return 'NULL'
+  else
+    return "'#{str}'"
+  end
+end
 
 countryNames = getCountryNames()
 stateNames = getStateNames()
@@ -107,19 +115,20 @@ f.each_line { |l|
   next if duplicateCities.include? c[1]
 
   data = CityData.new
-  data.name = c[1]
+  data.name = c[2]
+  data.special_chars_name = c[1]
   data.latitude = c[4].to_f
   data.longitude = c[5].to_f
   data.country_code = c[8]
   data.country_name = countryNames[data.country_code]
   data.state_code = c[10] if data.country_code.eql? 'US'
-  data.state_name = stateNames[data.country_code + '.' +c[10]]
+  data.state_name = stateNames[data.country_code + '.' +c[10]] if c[10]
   data.population = c[14].to_i
   data.timezone = c[17]
 
   case data.country_code
   when 'US'
-    if data.population < 250000
+    if data.population < 250_000
       data.require_state = 'true'
     else
       data.require_state = 'false'
@@ -127,7 +136,7 @@ f.each_line { |l|
     data.require_country = 'false'
   else
     data.require_state = 'false' #People rarely refer to provinces/states outside of the US, in the news
-    if data.population < 500000 # or ['CN', 'IN'].include?(data.country_code)
+    if data.population < 4_000_000  or ['CN', 'IN'].include?(data.country_code)
       data.require_country = 'true'
     else
       data.require_country = 'false'
@@ -135,7 +144,7 @@ f.each_line { |l|
   end
 
   puts toCityInsert(data)
-  puts toKeywordInsert(data) if data.population > 100000
+  #puts toKeywordInsert(data) if data.population > 100000
 
   #p stateNames
   #p c
